@@ -45,7 +45,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
             <div className="bg-blue-600 p-2 rounded-lg">
               <ShieldCheck size={24} className="text-white" />
             </div>
-            <span className="text-xl font-bold text-white">Sentinel</span>
+            <span className="text-xl font-bold text-white">Archangel</span>
           </div>
         </div>
 

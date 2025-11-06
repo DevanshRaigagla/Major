@@ -27,7 +27,7 @@ export default function Layout() {
              <div className="bg-blue-600 p-2 rounded-lg">
                 <ShieldCheck size={20} className="text-white" />
               </div>
-              <span className="text-lg font-bold text-white">Sentinel</span>
+              <span className="text-lg font-bold text-white">Archangel</span>
            </div>
            <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}

@@ -1,10 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Bell, Mail, Smartphone, SlidersHorizontal } from 'lucide-react';
+import Connect_Context from '../context/ConnectContext';
 import ToggleSwitch from '../components/ToggleSwitch';
+
+// Note: Your backend supports notification settings, but your
+// Api.js doesn't have functions for it yet.
+// This is a static page for now, as in your file.
+// You can uncomment the context logic once you add
+// `fetchSettings` and `updateSettings` to your Api.js.
 
 export default function SettingsPage() {
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(false);
+  
+  // const { notificationSettings, upsertNotificationSettings, loading } = useContext(Connect_Context);
+  // const [email, setEmail] = useState('');
+
+  // useEffect(() => {
+  //   if (notificationSettings) {
+  //     setEmail(notificationSettings.email || '');
+  //     setEmailEnabled(notificationSettings.notifyOn === 'both' || notificationSettings.notifyOn === 'email');
+  //     setSmsEnabled(notificationSettings.notifyOn === 'both' || notificationSettings.notifyOn === 'sms');
+  //   }
+  // }, [notificationSettings]);
+
+  // const handleSave = () => {
+  //   let notifyOn = 'never';
+  //   if (emailEnabled && smsEnabled) notifyOn = 'both';
+  //   else if (emailEnabled) notifyOn = 'email';
+  //   else if (smsEnabled) notifyOn = 'sms';
+    
+  //   upsertNotificationSettings({ 
+  //     websiteId: "your_website_id_here", // This needs to be dynamic
+  //     email, 
+  //     smsNumber: null, // Add SMS number field
+  //     notifyOn 
+  //   });
+  // };
 
   return (
     <>
@@ -53,6 +85,8 @@ export default function SettingsPage() {
                   type="email"
                   id="emailAddress"
                   defaultValue="your@email.com"
+                  // value={email}
+                  // onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
@@ -97,6 +131,15 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+        
+        {/* <div className="flex justify-end">
+          <button 
+            onClick={handleSave}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
+          >
+            Save Settings
+          </button>
+        </div> */}
 
       </div>
     </>

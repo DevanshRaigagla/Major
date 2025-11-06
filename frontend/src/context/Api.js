@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import Connect_Context from "./ConnectContext";
 import axios from "axios";
 
@@ -18,24 +18,32 @@ export const ApiProvider = ({ children }) => {
    * Fetches all initial data from the backend API
    */
   const fetchAllData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [sitesRes, incidentsRes] = await Promise.all([
-        axios.get(`${API_URL}/websites`),
-        axios.get(`${API_URL}/incidents`)
-      ]);
+  setLoading(true);
+  setError(null);
+  try {
+    const [sitesRes, incidentsRes] = await Promise.all([
+      axios.get(`${API_URL}/websites`),
+      axios.get(`${API_URL}/incidents`)
+    ]);
 
-      setWebsites(sitesRes.data || []);
-      setIncidents(incidentsRes.data || []);
-      
-    } catch (err) {
-      console.error("Failed to fetch initial data:", err);
-      setError(err.message || "Could not connect to the server.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("Fetched websites:", sitesRes.data);
+
+    // Filter out websites with null name or url
+    const filteredWebsites = (sitesRes.data || []).filter(
+      w => w.name && w.url
+    );
+
+    setWebsites(filteredWebsites);
+    setIncidents(incidentsRes.data || []);
+    
+  } catch (err) {
+    console.error("Failed to fetch initial data:", err);
+    setError(err.message || "Could not connect to the server.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   /**
    * Fetches metrics for a single website
@@ -97,7 +105,6 @@ export const ApiProvider = ({ children }) => {
       console.error("Failed to resolve incident:", err);
     }
   };
-
 
   // --- WebSocket and Initial Data Load Effect ---
   useEffect(() => {

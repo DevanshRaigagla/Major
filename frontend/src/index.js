@@ -3,19 +3,20 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { BrowserRouter } from 'react-router-dom'; //  Import this
+import { BrowserRouter } from 'react-router-dom';
+import { ApiProvider } from './context/Api'; // 👈 adjust the path if needed
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
 root.render(
   <React.StrictMode>
-    {/*  Wrap your App with BrowserRouter */}
     <BrowserRouter>
-      <App />
+      <ApiProvider>
+        <App />
+      </ApiProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+//  Keep reportWebVitals — this stays unchanged
 reportWebVitals();
