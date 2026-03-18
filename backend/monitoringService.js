@@ -2,6 +2,7 @@
 
 const axios = require("axios");
 const storage = require("./storage");
+const emailService = require("./Emailservice");
 
 // Locations configuration — used as fallback (no DB locations table)
 const LOCATIONS = [
@@ -95,9 +96,6 @@ class MonitoringService {
         newStatus = "warning";
       }
 
-      // Only update fields that exist in the websites table
-      await storage.updateWebsite(website.id, { lastChecked: new Date() });
-
       // Broadcast real-time update to all connected WebSocket clients
       this.broadcast({
         type: "website_update",
@@ -123,8 +121,6 @@ class MonitoringService {
         location: location.name
       });
       this.broadcast({ type: "metric", data: metric });
-
-      await storage.updateWebsite(website.id, { lastChecked: new Date() });
 
       this.broadcast({
         type: "website_update",
@@ -158,11 +154,16 @@ class MonitoringService {
           type: "incident_created",
           data: { websiteId: website.id, type: "http_error", statusCode }
         });
+
+        // Email the website owner — website.user_email comes from the DB row
+        await emailService.sendIncidentAlert(website, errorMessage ? "connection_error" : "http_error", statusCode, errorMessage);
       } else if (newStatus === "online" && activeIncidents.length > 0) {
         // Site recovered — resolve all open incidents
         for (const incident of activeIncidents) {
           const resolved = await storage.resolveIncident(incident.id);
           this.broadcast({ type: "incident_resolved", data: resolved });
+          // Email the owner that the site has recovered
+          await emailService.sendRecoveryAlert(website);
         }
       }
     } catch (e) {
@@ -197,7 +198,8 @@ class MonitoringService {
   }
 
   async initializeMonitoring(defaultIntervalMs = 10000) {
-    const websites = await storage.getAllWebsites();
+    // Pass null to get all websites across all users (monitoring runs globally)
+    const websites = await storage.getAllWebsites(null);
     for (const website of websites) {
       if (website.isActive) {
         const interval = website.intervalMs || defaultIntervalMs;

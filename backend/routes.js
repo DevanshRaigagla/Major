@@ -1,13 +1,69 @@
 // routes.js
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const storage = require('./storage');
 const monitoringService = require('./monitoringService');
 const router = express.Router();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-me';
+
+/* Auth */
+router.post('/auth/register', async (req, res) => {
+  try {
+    const { user_email, password } = req.body;
+    if (!user_email || !password) return res.status(400).json({ error: 'Email and password required' });
+    
+    const existing = await storage.getUserByEmail(user_email);
+    if (existing) return res.status(400).json({ error: 'Email already in use' });
+    
+    const hashed = await bcrypt.hash(password, 10);
+    await storage.createUser(user_email, hashed);
+    
+    const token = jwt.sign({ user_email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user_email });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to register' });
+  }
+});
+
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { user_email, password } = req.body;
+    const user = await storage.getUserByEmail(user_email);
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ error: 'Invalid credentials' });
+    
+    const token = jwt.sign({ user_email: user.user_email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user_email: user.user_email });
+  } catch (err) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Middleware for protected routes
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Access denied' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+// Protect all lower routes
+router.use(authenticateToken);
+
 /* Websites */
 router.get('/websites', async (req, res) => {
   try {
-    const websites = await storage.getAllWebsites();
+    const websites = await storage.getAllWebsites(req.user.user_email);
     res.json(websites);
   } catch (err) {
     console.error(err);
@@ -29,6 +85,7 @@ router.get('/websites/:id', async (req, res) => {
 router.post('/websites', async (req, res) => {
   try {
     const body = req.body;
+    body.user_email = req.user.user_email;
 
     // 1. Save to DB first
     const created = await storage.createWebsite(body);
@@ -75,8 +132,8 @@ router.delete('/websites/:id', async (req, res) => {
 /* Incidents */
 router.get('/incidents', async (req, res) => {
   try {
-    // Return all incidents (active + resolved) so the incidents page shows full history
-    const incidents = await storage.getAllIncidents();
+    // Return all incidents (active + resolved) scoped to the logged-in user's websites
+    const incidents = await storage.getAllIncidents(req.user.user_email);
     res.json(incidents);
   } catch (err) {
     console.error(err);

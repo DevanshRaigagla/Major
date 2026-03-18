@@ -7,12 +7,30 @@ async function query(sql, params) {
   return rows;
 }
 
+/* ---------------- Users ---------------- */
+
+async function createUser(email, hashedPassword) {
+  await query('INSERT INTO users (user_email, password) VALUES (?, ?)', [email, hashedPassword]);
+  return { email };
+}
+
+async function getUserByEmail(email) {
+  const rows = await query('SELECT * FROM users WHERE user_email = ? LIMIT 1', [email]);
+  return rows[0] || null;
+}
+
 /* ---------------- Websites ---------------- */
 
-async function getAllWebsites() {
-  const websites = await query(
-    'SELECT * FROM websites ORDER BY createdAt DESC'
-  );
+async function getAllWebsites(user_email = null) {
+  let sql = 'SELECT * FROM websites ORDER BY createdAt DESC';
+  let params = [];
+  
+  if (user_email) {
+    sql = 'SELECT * FROM websites WHERE user_email = ? ORDER BY createdAt DESC';
+    params = [user_email];
+  }
+
+  const websites = await query(sql, params);
 
   for (let site of websites) {
     // Latest metric (from any location)
@@ -58,13 +76,13 @@ async function getWebsiteById(id) {
   return rows[0];
 }
 
-async function createWebsite({ name, url, expectedStatus = 200, timeoutMs = 5000, isActive = true }) {
+async function createWebsite({ user_email, name, url, expectedStatus = 200, timeoutMs = 5000, isActive = true }) {
   const id = uuid();
 
   await query(
-    `INSERT INTO websites (id,name,url,expectedStatus,timeoutMs,isActive)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, name, url, expectedStatus, timeoutMs, isActive ? 1 : 0]
+    `INSERT INTO websites (id,user_email,name,url,expectedStatus,timeoutMs,isActive)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, user_email, name, url, expectedStatus, timeoutMs, isActive ? 1 : 0]
   );
 
   return getWebsiteById(id);
@@ -115,13 +133,26 @@ async function createIncident({ websiteId, type, statusCode = null, errorMessage
   return rows[0];
 }
 
-async function getAllIncidents() {
+async function getAllIncidents(user_email) {
   return await query(
-    'SELECT * FROM incidents ORDER BY startedAt DESC'
+    `SELECT i.* FROM incidents i
+     JOIN websites w ON i.websiteId = w.id
+     WHERE w.user_email = ?
+     ORDER BY i.startedAt DESC`,
+    [user_email]
   );
 }
 
-async function getActiveIncidents() {
+async function getActiveIncidents(user_email = null) {
+  if (user_email) {
+    return await query(
+      `SELECT i.* FROM incidents i 
+       JOIN websites w ON i.websiteId = w.id 
+       WHERE i.isResolved = 0 AND w.user_email = ? 
+       ORDER BY i.startedAt DESC`,
+      [user_email]
+    );
+  }
   return await query(
     'SELECT * FROM incidents WHERE isResolved = 0 ORDER BY startedAt DESC'
   );
@@ -237,6 +268,8 @@ async function upsertNotificationSettings({ websiteId, email = null, smsNumber =
 }
 
 module.exports = {
+  createUser,
+  getUserByEmail,
   getAllIncidents,
   getActiveIncidentsForWebsite,
   getAllWebsites,
