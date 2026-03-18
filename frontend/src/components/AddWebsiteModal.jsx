@@ -46,18 +46,14 @@ export default function AddWebsiteModal({ open, onClose, onSubmit }) {
     //   return;
     // }
 
-    onSubmit({
-      name,
-      url,
-      // locationIds: selectedLocations
-    });
+    // Let the parent (DashboardPage/WebsitesPage) handle closing
+    // so the modal stays open if the API call fails
+    onSubmit({ name, url });
 
-    // reset form
+    // Reset form fields
     setName("");
     setUrl("");
     setSelectedLocations([]);
-
-    onClose();
   };
 
   return (

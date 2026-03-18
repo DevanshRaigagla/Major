@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 import WebsitesPage from './pages/WebsitesPage';
 import IncidentsPage from './pages/IncidentsPage';
 import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import AuthContext from './context/AuthContext';
+
+function PrivateRoute({ children }) {
+  const { token, loading } = useContext(AuthContext);
+  if (loading) return null;
+  return token ? children : <Navigate to="/login" replace />;
+}
 
 /**
  * This is the main App component.
@@ -13,9 +22,13 @@ import SettingsPage from './pages/SettingsPage';
  * The <Navigate> component redirects the base "/" path to "/dashboard".
  */
 export default function App() {
+  const { token } = useContext(AuthContext);
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
+      <Route path="/login" element={token ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/signup" element={token ? <Navigate to="/dashboard" replace /> : <SignupPage />} />
+
+      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         {/* Child routes are rendered into the Layout's <Outlet> */}
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
