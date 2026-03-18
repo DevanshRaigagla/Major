@@ -104,18 +104,35 @@ export const ApiProvider = ({ children }) => {
       try {
         const message = JSON.parse(event.data);
         switch (message.type) {
-          case "metric":
-          case "website_update": {
-            const updated = message.data;
-            setWebsites((prev) => {
-              const exists = prev.some((w) => w.id === updated.id);
-              if (exists) {
-                return prev.map((w) => w.id === updated.id ? { ...w, ...updated } : w);
-              }
-              return [updated, ...prev];
+          // Handle new metrics for the graph
+          case 'metric':
+            const newMetric = message.data;
+            setMetrics(prev => {
+              const currentList = prev[newMetric.websiteId] || [];
+              // Add to beginning of array (assuming descending sort like API)
+              return {
+                ...prev,
+                [newMetric.websiteId]: [newMetric, ...currentList].slice(0, 100)
+              };
             });
             break;
-          }
+
+          // Handle website status/response time update
+          case 'website_update':
+            const updatedWebsite = message.data;
+            setWebsites(prevWebsites => {
+              const exists = prevWebsites.some(w => w.id === updatedWebsite.id);
+              if (exists) {
+                // Update existing
+                return prevWebsites.map(w =>
+                  w.id === updatedWebsite.id ? { ...w, ...updatedWebsite } : w
+                );
+              } else {
+                // Add new
+                return [updatedWebsite, ...prevWebsites];
+              }
+            });
+            break;
           case "incident_created":
             setIncidents((prev) => [message.data, ...prev]);
             break;

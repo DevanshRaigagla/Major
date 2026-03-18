@@ -1,10 +1,12 @@
 import React, { useState, useContext } from 'react';
 import Connect_Context from "../context/ConnectContext";
 import { Globe, MoreVertical } from 'lucide-react';
+import WebsiteDetailsModal from './WebsiteDetailsModal';
 
 export default function WebsiteCard({ website }) {
   const { deleteWebsite } = useContext(Connect_Context);
   const [open, setOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // ------------------------
   // Relative time formatter
@@ -142,10 +144,19 @@ export default function WebsiteCard({ website }) {
 
       {/* Footer */}
       <div className="p-4 mt-auto">
-        <button className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm">
+        <button 
+          onClick={() => setDetailsOpen(true)}
+          className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm"
+        >
           View Details
         </button>
       </div>
+
+      <WebsiteDetailsModal 
+        open={detailsOpen} 
+        onClose={() => setDetailsOpen(false)} 
+        website={website} 
+      />
     </div>
   );
 }

@@ -78,12 +78,14 @@ class MonitoringService {
       const statusCode = resp.status;
 
       // Save metric to DB
-      await storage.createMetric({
+      const metric = await storage.createMetric({
         websiteId: website.id,
         responseTimeMs: responseTime,
         statusCode,
         location: location.name
       });
+      // Broadcast metric for live graphs
+      this.broadcast({ type: "metric", data: metric });
 
       // Determine status from HTTP response
       let newStatus = "online";
@@ -114,12 +116,13 @@ class MonitoringService {
     } catch (err) {
       const responseTime = Date.now() - start;
 
-      await storage.createMetric({
+      const metric = await storage.createMetric({
         websiteId: website.id,
         responseTimeMs: responseTime,
         statusCode: null,
         location: location.name
       });
+      this.broadcast({ type: "metric", data: metric });
 
       await storage.updateWebsite(website.id, { lastChecked: new Date() });
 
