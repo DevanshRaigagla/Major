@@ -41,15 +41,15 @@ export default function AddWebsiteModal({ open, onClose, onSubmit }) {
       return;
     }
 
-    if (selectedLocations.length === 0) {
-      alert("Select at least one monitoring location");
-      return;
-    }
+    // if (selectedLocations.length === 0) {
+    //   alert("Select at least one monitoring location");
+    //   return;
+    // }
 
     onSubmit({
       name,
       url,
-      locationIds: selectedLocations
+      // locationIds: selectedLocations
     });
 
     // reset form
@@ -93,7 +93,7 @@ export default function AddWebsiteModal({ open, onClose, onSubmit }) {
           </div>
 
           {/* Monitoring Locations */}
-          <div>
+          {/* <div>
             <label className="text-sm text-gray-400">
               Monitoring Locations
             </label>
@@ -120,7 +120,7 @@ export default function AddWebsiteModal({ open, onClose, onSubmit }) {
               ))}
 
             </div>
-          </div>
+          </div> */}
 
         </div>
 

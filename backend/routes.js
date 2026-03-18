@@ -29,11 +29,22 @@ router.get('/websites/:id', async (req, res) => {
 router.post('/websites', async (req, res) => {
   try {
     const body = req.body;
+
+    // 1. Save to DB first
     const created = await storage.createWebsite(body);
-    // start monitoring
-    const interval = parseInt(process.env.CHECK_TIMEOUT_MS || '10000', 10);
-    await monitoringService.startMonitoringForWebsite(created, interval);
+
+    // 2. Respond immediately so the client always gets the new website
     res.status(201).json(created);
+
+    // 3. Start monitoring AFTER responding — an error here won't affect the client
+    try {
+      const interval = parseInt(process.env.CHECK_TIMEOUT_MS || '10000', 10);
+      await monitoringService.startMonitoringForWebsite(created, interval);
+    } catch (monitorErr) {
+      // Log but don't crash — website is already saved and returned
+      console.error('Failed to start monitoring for website:', created.id, monitorErr);
+    }
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create website' });
@@ -64,7 +75,8 @@ router.delete('/websites/:id', async (req, res) => {
 /* Incidents */
 router.get('/incidents', async (req, res) => {
   try {
-    const incidents = await storage.getActiveIncidents();
+    // Return all incidents (active + resolved) so the incidents page shows full history
+    const incidents = await storage.getAllIncidents();
     res.json(incidents);
   } catch (err) {
     console.error(err);

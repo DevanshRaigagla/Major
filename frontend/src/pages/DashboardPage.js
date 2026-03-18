@@ -6,7 +6,7 @@ import WebsiteCard from '../components/WebsiteCard';
 import AddWebsiteModal from '../components/AddWebsiteModal';
 
 export default function DashboardPage() {
-  const { websites, createWebsite } = useContext(Connect_Context);
+  const { websites, createWebsite, loading, error } = useContext(Connect_Context);
   const [openModal, setOpenModal] = useState(false);
 
   const totalWebsites = websites.length;
@@ -16,6 +16,17 @@ export default function DashboardPage() {
     { title: "Total Websites", value: totalWebsites },
     { title: "Online", value: onlineWebsites },
   ];
+
+  // Only close the modal if createWebsite succeeded (returns the new site, not null)
+  const handleAddWebsite = async ({ name, url }) => {
+    const result = await createWebsite({ name, url });
+    if (result) {
+      setOpenModal(false);
+    }
+  };
+
+  if (loading) return <p className="text-white p-6">Loading...</p>;
+  if (error) return <p className="text-red-400 p-6">Error: {error}</p>;
 
   return (
     <>
@@ -53,7 +64,7 @@ export default function DashboardPage() {
       <AddWebsiteModal
         open={openModal}
         onClose={() => setOpenModal(false)}
-        onSubmit={createWebsite}
+        onSubmit={handleAddWebsite}
       />
     </>
   );

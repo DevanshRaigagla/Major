@@ -115,9 +115,22 @@ async function createIncident({ websiteId, type, statusCode = null, errorMessage
   return rows[0];
 }
 
+async function getAllIncidents() {
+  return await query(
+    'SELECT * FROM incidents ORDER BY startedAt DESC'
+  );
+}
+
 async function getActiveIncidents() {
   return await query(
     'SELECT * FROM incidents WHERE isResolved = 0 ORDER BY startedAt DESC'
+  );
+}
+
+async function getActiveIncidentsForWebsite(websiteId) {
+  return await query(
+    'SELECT * FROM incidents WHERE websiteId = ? AND isResolved = 0 ORDER BY startedAt DESC',
+    [websiteId]
   );
 }
 
@@ -224,6 +237,8 @@ async function upsertNotificationSettings({ websiteId, email = null, smsNumber =
 }
 
 module.exports = {
+  getAllIncidents,
+  getActiveIncidentsForWebsite,
   getAllWebsites,
   getWebsiteById,
   createWebsite,
